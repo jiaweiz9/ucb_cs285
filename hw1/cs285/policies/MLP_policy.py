@@ -148,8 +148,8 @@ class MLPPolicySL(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         actions = ptu.from_numpy(actions).to(ptu.device)
         act_distribution = self(obs)
         sample_actions = act_distribution.rsample()
-        loss = (actions - sample_actions).sum() ** 2
-
+        # print("sampled_actions:", sample_actions.shape)
+        loss = (sample_actions - actions).pow(2).mean()
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
