@@ -132,8 +132,8 @@ def run_training_loop(params):
             # TODO: collect `params['batch_size']` transitions
             # HINT: use utils.sample_trajectories
             # TODO: implement missing parts of utils.sample_trajectory
-            paths, envsteps_this_batch = TODO
-
+            paths, envsteps_this_batch = utils.sample_trajectories(env, actor, params['batch_size'], params['ep_len'])
+            # print(envsteps_this_batch)
             # relabel the collected obs with actions from a provided expert policy
             if params['do_dagger']:
                 print("\nRelabelling collected observations with labels from an expert policy...")
@@ -141,8 +141,11 @@ def run_training_loop(params):
                 # TODO: relabel collected obsevations (from our policy) with labels from expert policy
                 # HINT: query the policy (using the get_action function) with paths[i]["observation"]
                 # and replace paths[i]["action"] with these expert labels
-                paths = TODO
+                for i in range(len(paths)):
+                    expert_actions = expert_policy.get_action(paths[i]["observation"])
+                    paths[i]["action"] = expert_actions
 
+        print("envstrps_this_batch:", envsteps_this_batch)
         total_envsteps += envsteps_this_batch
         # add collected data to replay buffer
         replay_buffer.add_rollouts(paths)
@@ -150,15 +153,26 @@ def run_training_loop(params):
         # train agent (using sampled data from replay buffer)
         print('\nTraining agent using sampled data from replay buffer...')
         training_logs = []
-        for _ in range(params['num_agent_train_steps_per_iter']):
+        for i in range(params['num_agent_train_steps_per_iter']):
 
           # TODO: sample some data from replay_buffer
           # HINT1: how much data = params['train_batch_size']
           # HINT2: use np.random.permutation to sample random indices
           # HINT3: return corresponding data points from each array (i.e., not different indices from each array)
           # for imitation learning, we only need observations and actions.  
-          ob_batch, ac_batch = TODO
+          
+          permuted_indices = np.random.permutation(len(replay_buffer.obs))
+          selected_indices = permuted_indices[:params['train_batch_size']]
 
+          if i == 0:
+                print('Selected indices:', selected_indices)
+                print('Selected indices shape:', selected_indices.shape)
+                print('replay_buffer_obs:', len(replay_buffer.obs))
+                print('replay_buffer_acs:', len(replay_buffer.acs))
+          ob_batch, ac_batch = replay_buffer.obs[selected_indices], replay_buffer.acs[selected_indices]
+          if i == 0:
+                print('ob_batch:', ob_batch.shape)
+                print('ac_batch:', ac_batch.shape)
           # use the sampled data to train an agent
           train_log = actor.update(ob_batch, ac_batch)
           training_logs.append(train_log)
