@@ -61,13 +61,13 @@ class MLPPolicy(nn.Module):
         # TODO: implement get_action
         if self.discrete:
             action_distr = distributions.Categorical(logits=self.logits_net(obs))
-            action = action_distr.sample()
+            # action = action_distr.sample()
         else:
             action_distr = distributions.Normal(
                 loc=self.mean_net(obs), scale=torch.exp(self.logstd)
             )
-            action = action_distr.rsample()
-
+            # action = action_distr.rsample()
+        action = action_distr.sample()
         return action.cpu().numpy()
 
     def forward(self, obs: torch.FloatTensor):
