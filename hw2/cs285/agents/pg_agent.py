@@ -125,7 +125,9 @@ class PGAgent(nn.Module):
             advantages = q_values
         else:
             # TODO: run the critic and use it as a baseline
-            values = self.critic.forward(ptu.from_numpy(obs)).detach().numpy()
+            values = self.critic.forward(ptu.from_numpy(obs)).detach().cpu().numpy().squeeze()
+            print("values", values.shape)
+            print("q_values", q_values.shape)
             assert values.shape == q_values.shape
 
             if self.gae_lambda is None:
