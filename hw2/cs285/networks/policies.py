@@ -59,14 +59,16 @@ class MLPPolicy(nn.Module):
     def get_action(self, obs: np.ndarray) -> np.ndarray:
         """Takes a single observation (as a numpy array) and returns a single action (as a numpy array)."""
         # TODO: implement get_action
-        if self.discrete:
-            action_distr = distributions.Categorical(logits=self.logits_net(obs))
-            # action = action_distr.sample()
-        else:
-            action_distr = distributions.Normal(
-                loc=self.mean_net(obs), scale=torch.exp(self.logstd)
-            )
-            # action = action_distr.rsample()
+        # if self.discrete:
+        #     action_distr = distributions.Categorical(logits=self.logits_net(obs))
+        #     # action = action_distr.sample()
+        # else:
+        #     action_distr = distributions.Normal(
+        #         loc=self.mean_net(obs), scale=torch.exp(self.logstd)
+        #     )
+        #     # action = action_distr.rsample()
+        obs = ptu.from_numpy(obs)
+        action_distr = self.forward(obs)
         action = action_distr.sample()
         return action.cpu().numpy()
 
@@ -112,11 +114,10 @@ class MLPPolicyPG(MLPPolicy):
 
         if self.discrete:
             log_probs = action_distr.log_prob(actions)
-            loss = -(log_probs * advantages).mean()
         else:
             log_probs = action_distr.log_prob(actions).sum(axis=-1)
-            loss = -(log_probs * advantages).mean()
         
+        loss = -(log_probs * advantages).mean()
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
