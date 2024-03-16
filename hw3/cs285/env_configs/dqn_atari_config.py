@@ -18,8 +18,8 @@ import cs285.infrastructure.pytorch_util as ptu
 
 class PreprocessAtari(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        assert x.ndim in [3, 4], f"Bad observation shape: {x.shape}"
-        assert x.shape[-3:] == (4, 84, 84), f"Bad observation shape: {x.shape}"
+        assert x.ndim in [3, 4], f"Bad observation shape: {x.shape}"  # dimension must be 3 or 4
+        assert x.shape[-3:] == (4, 84, 84), f"Bad observation shape: {x.shape}" # shape must be (4, 84, 84)? why?
         assert x.dtype == torch.uint8
 
         return x / 255.0
