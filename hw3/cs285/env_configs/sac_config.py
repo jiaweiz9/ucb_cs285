@@ -40,8 +40,8 @@ def sac_config(
     num_critic_networks: int = 1,
     target_critic_backup_type: str = "mean",  # One of "doubleq", "min", or "mean"
     # Soft actor-critic
-    backup_entropy: bool = True,
-    use_entropy_bonus: bool = True,
+    backup_entropy: bool = False,
+    use_entropy_bonus: bool = False,
     temperature: float = 0.1,
     actor_fixed_std: Optional[float] = None,
     use_tanh: bool = True,

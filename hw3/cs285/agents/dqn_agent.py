@@ -74,7 +74,8 @@ class DQNAgent(nn.Module):
             next_qa_values = self.target_critic(next_obs)
 
             if self.use_double_q:
-                raise NotImplementedError
+                next_action = self.critic(next_obs).argmax(dim=1) # select actions with the online critic
+                
             else:
                 next_action = next_qa_values.argmax(dim=1)
             
