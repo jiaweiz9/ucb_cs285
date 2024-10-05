@@ -45,6 +45,9 @@ class DQNAgent(nn.Module):
     def get_action(self, observation: np.ndarray, epsilon: float = 0.02) -> int:
         """
         Used for evaluation.
+
+        returns:
+            The action index that the agent would take in this state
         """
         observation = ptu.from_numpy(np.asarray(observation))[None]
 
@@ -85,7 +88,7 @@ class DQNAgent(nn.Module):
 
         # TODO(student): train the critic with the target values
         qa_values = self.critic(obs)
-        q_values = qa_values.gather(1, action.unsqueeze(1)).squeeze(1) # Compute from the data actions; see torch.gather
+        q_values = qa_values.gather(1, action.unsqueeze(1)).squeeze(1) 
 
         assert q_values.shape == (batch_size, )
         assert target_values.shape == (batch_size, )

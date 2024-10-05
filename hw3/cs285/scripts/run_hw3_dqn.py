@@ -98,15 +98,26 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
         next_observation, reward, done, info = env.step(action)
         next_observation = np.asarray(next_observation)
         truncated = info.get("TimeLimit.truncated", False)
+        done = done or truncated
 
         # TODO(student): Add the data to the replay buffer
         if isinstance(replay_buffer, MemoryEfficientReplayBuffer):
             # We're using the memory-efficient replay buffer,
             # so we only insert next_observation (not observation)
-            replay_buffer.insert(next_observation, action, reward, done, truncated)
+            replay_buffer.insert(
+                next_observation=next_observation, 
+                action=action, 
+                reward=reward, 
+                done=done,
+                )
         else:
             # We're using the regular replay buffer
-            replay_buffer.insert(observation, action, reward, next_observation, done)
+            replay_buffer.insert(
+                observation=observation, 
+                action=action, 
+                reward=reward, 
+                next_observation=next_observation, 
+                done=done)
 
         # Handle episode termination
         if done:
@@ -126,8 +137,20 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
             batch = ptu.from_numpy(batch)
 
             # TODO(student): Train the agent. `batch` is a dictionary of numpy arrays,
-            # print(batch)
-            update_info = agent.update(*batch.values(), step)
+            observations = batch["observations"]
+            actions = batch["actions"]
+            rewards = batch["rewards"]
+            next_observations = batch["next_observations"]
+            dones = batch["dones"]
+
+            update_info = agent.update(
+                obs=observations,
+                action=actions,
+                reward=rewards,
+                next_obs=next_observations,
+                done=dones,
+                step=step
+                )
 
             # Logging code
             update_info["epsilon"] = epsilon
