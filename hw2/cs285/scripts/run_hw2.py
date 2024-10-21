@@ -15,7 +15,7 @@ from cs285.infrastructure import utils
 from cs285.infrastructure.logger import Logger
 from cs285.infrastructure.action_noise_wrapper import ActionNoiseWrapper
 
-import wandb
+# import wandb
 
 MAX_NVIDEO = 2
 
@@ -108,13 +108,6 @@ def run_training_loop(args):
                     "Train_AverageReturn"
                 ]
 
-            # upload to wandb
-            wandb.log({
-                "Eval_return": logs["Eval_AverageReturn"],
-                "Train_return": logs["Train_AverageReturn"],
-                "Actor_loss": logs["Actor Loss"],
-                "Critic_loss": logs["Baseline Loss"],        
-            })
 
             # perform the logging
             for key, value in logs.items():
@@ -198,14 +191,6 @@ def main():
     args.logdir = logdir
     if not (os.path.exists(logdir)):
         os.makedirs(logdir)
-
-    wandb.init(
-        project = "cs285-hw2-gae",
-        config= {
-            "gae_lambda": args.gae_lambda,
-            "n_iteration": args.n_iter
-        }
-    )
 
     run_training_loop(args)
 

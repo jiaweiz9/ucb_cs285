@@ -83,8 +83,10 @@ class MLPPolicy(nn.Module):
             action_distr = distributions.Categorical(logits=self.logits_net(obs))
         else:
             # TODO: define the forward pass for a policy with a continuous action space.
+            
             action_distr = distributions.Normal(
-                loc=self.mean_net(obs), scale=torch.exp(self.logstd)
+                loc=self.mean_net(obs),
+                scale=torch.exp(self.logstd),
             )
             
         return action_distr
