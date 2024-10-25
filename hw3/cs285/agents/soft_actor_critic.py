@@ -82,6 +82,9 @@ class SoftActorCritic(nn.Module):
         self.observation_shape = observation_shape
         self.action_dim = action_dim
         self.discount = discount
+        print("discount", discount)
+        print("obs shape", observation_shape)
+        print("action dim", action_dim)
         self.target_update_period = target_update_period
         self.target_critic_backup_type = target_critic_backup_type
         self.num_critic_networks = num_critic_networks
@@ -260,7 +263,13 @@ class SoftActorCritic(nn.Module):
             ), action.shape
 
             # TODO(student): Compute Q-values for the current state-action pair
-            q_values = self.critic(obs[:, None].expand(-1, self.num_actor_samples, -1), action)
+            expanded_obs = obs.unsqueeze(0).expand(self.num_actor_samples, -1, -1) 
+            assert expanded_obs.shape == (
+                self.num_actor_samples,
+                batch_size,
+                *self.observation_shape,
+            ), expanded_obs.shape
+            q_values = self.critic(expanded_obs, action)
             assert q_values.shape == (
                 self.num_critic_networks,
                 self.num_actor_samples,
@@ -274,7 +283,7 @@ class SoftActorCritic(nn.Module):
         # Do REINFORCE: calculate log-probs and use the Q-values
         # TODO(student)
         log_probs = action_distribution.log_prob(action)
-        loss = -log_probs * advantage
+        loss = -(log_probs * advantage).mean()
 
         return loss, torch.mean(self.entropy(action_distribution))
 
@@ -305,6 +314,7 @@ class SoftActorCritic(nn.Module):
             loss, entropy = self.actor_loss_reparametrize(obs)
         elif self.actor_gradient_type == "reinforce":
             loss, entropy = self.actor_loss_reinforce(obs)
+
 
         # Add entropy if necessary
         if self.use_entropy_bonus:
@@ -340,6 +350,9 @@ class SoftActorCritic(nn.Module):
         """
         Update the actor and critic networks.
         """
+        # Deal with LR scheduling
+        self.actor_lr_scheduler.step()
+        self.critic_lr_scheduler.step()
 
         critic_infos = []
         # TODO(student): Update the critic for num_critic_upates steps, and add the output stats to critic_infos
@@ -350,8 +363,8 @@ class SoftActorCritic(nn.Module):
                 )
             )
         # TODO(student): Update the actor
-        # actor_info = self.update_actor(observations)
         actor_info = {}
+        actor_info = self.update_actor(observations)
 
         # TODO(student): Perform either hard or soft target updates.
         # Relevant variables:
@@ -369,9 +382,6 @@ class SoftActorCritic(nn.Module):
             k: np.mean([info[k] for info in critic_infos]) for k in critic_infos[0]
         }
 
-        # Deal with LR scheduling
-        self.actor_lr_scheduler.step()
-        self.critic_lr_scheduler.step()
 
         return {
             **actor_info,

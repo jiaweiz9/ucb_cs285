@@ -18,7 +18,7 @@ from cs285.infrastructure import utils
 from cs285.infrastructure.logger import Logger
 from cs285.infrastructure.replay_buffer import MemoryEfficientReplayBuffer, ReplayBuffer
 
-from scripting_utils import make_logger, make_config
+from cs285.scripts.scripting_utils import make_logger, make_config
 
 MAX_NVIDEO = 2
 
@@ -98,7 +98,7 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
         next_observation, reward, done, info = env.step(action)
         next_observation = np.asarray(next_observation)
         truncated = info.get("TimeLimit.truncated", False)
-        done = done or truncated
+        need_reset = done or truncated
 
         # TODO(student): Add the data to the replay buffer
         if isinstance(replay_buffer, MemoryEfficientReplayBuffer):
@@ -117,7 +117,8 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
                 action=action, 
                 reward=reward, 
                 next_observation=next_observation, 
-                done=done)
+                done=done
+                )
 
         # Handle episode termination
         if done:
