@@ -152,15 +152,40 @@ class SoftActorCritic(nn.Module):
 
         # TODO(student): Implement the different backup strategies.
         if self.target_critic_backup_type == "doubleq":
-            next_qs = next_qs[torch.randperm(self.num_critic_networks)]
-        elif self.target_critic_backup_type == "min":
-            next_qs = next_qs.min(dim=0).values
-        elif self.target_critic_backup_type == "mean":
-            next_qs = next_qs.mean(dim=0)
-        else:
-            # Default, we don't need to do anything.
-            pass
+            assert self.num_critic_networks == 2
+            next_qs = next_qs[[1, 0], :]
 
+        elif self.target_critic_backup_type == "min":
+            assert self.num_critic_networks == 2
+            next_qs = next_qs.min(dim=0, keepdim=True).values
+            next_qs = next_qs.repeat((self.num_critic_networks, 1))
+
+        elif self.target_critic_backup_type == "mean":
+            next_qs = next_qs.mean(dim=0, keepdim=True).repeat((self.num_critic_networks, 1))
+
+        elif self.target_critic_backup_type == "redq":
+            #randomized ensemble double q
+            # step 1. randomly select two critics for each sample
+            first_set = torch.randint(0, self.num_critic_networks, (batch_size,))
+            second_set = torch.randint(0, self.num_critic_networks, (batch_size,))
+
+            # step 2. get the q values for the selected critics
+            first_qs = next_qs[first_set, range(batch_size)]
+            second_qs = next_qs[second_set, range(batch_size)]
+            assert first_qs.shape == second_qs.shape == (batch_size, ), first_qs.shape
+
+            # step 3. get the minimum of the two q values
+            next_qs = torch.min(first_qs, second_qs)
+
+            assert next_qs.shape == (batch_size,), next_qs.shape
+            next_qs = next_qs[None].expand((self.num_critic_networks, batch_size)).contiguous()
+
+        else:
+            pass 
+        assert next_qs.shape == (
+            self.num_critic_networks,
+            batch_size,
+        ), next_qs.shape
 
         # If our backup strategy removed a dimension, add it back in explicitly
         # (assume the target for each critic will be the same)
