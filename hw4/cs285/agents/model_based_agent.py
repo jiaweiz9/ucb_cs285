@@ -219,5 +219,6 @@ class ModelBasedAgent(nn.Module):
                 # TODO(student): implement the CEM algorithm
                 # HINT: you need a special case for i == 0 to initialize
                 # the elite mean and std
+                pass
         else:
             raise ValueError(f"Invalid MPC strategy '{self.mpc_strategy}'")
